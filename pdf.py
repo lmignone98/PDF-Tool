@@ -19,6 +19,8 @@ class App:
         "png" : "image" 
     }
 
+    directions = {"clockwise" : 1, "counterclockwise" : -1}
+
     def __init__(self) -> None:
         self.logger = logging.getLogger(__file__)
         self.root = TkinterDnD.Tk() 
@@ -29,7 +31,7 @@ class App:
 
     def start(self) -> None:
         self.root.title("Edit your PDFs")
-        self.root.geometry("400x350")
+        self.root.geometry("400x275")
         self.root.resizable(False, False)
 
         lb_info = tk.Label(self.root, text="Drag and Drop your files here")
@@ -123,23 +125,30 @@ class App:
         ask_window = tk.Toplevel(self.root)
         ask_window.title("Select the angle")
         ask_window.resizable(False, False)
-        ask_window.geometry("300x200")
+        ask_window.geometry("230x130")
 
-        description = tk.Label(ask_window, text="Positive angles: clockwise\n Negative angles: counterclockwise\n")
-        description.pack()
+        angles = [90, 180]
+        angle_selection = tk.StringVar(ask_window)
+        angle_selection.set(angles[0])
 
-        angles = [90, 180, -90, -180]
-        var = tk.StringVar(ask_window)
-        var.set(angles[0])
+        directions = list(self.directions.keys())
+        direction_selection = tk.StringVar(ask_window)
+        direction_selection.set(directions[0])
 
         label = tk.Label(ask_window, text="Select the angle:")
-        label.pack()
+        label.pack(pady=5)
 
-        dropdown = tk.OptionMenu(ask_window, var, *angles)
-        dropdown.pack()
+        frame = tk.Frame(ask_window)
+        frame.pack(pady=5)
 
-        confirm_btn = tk.Button(ask_window, text="Confirm", command = lambda: (setattr(self, 'angle', int(var.get())), ask_window.destroy()))
-        confirm_btn.pack()
+        dropdown_angles = tk.OptionMenu(frame, angle_selection, *angles)
+        dropdown_angles.pack(side=tk.LEFT, padx=10)
+
+        dropdown_directions = tk.OptionMenu(frame, direction_selection, *directions)
+        dropdown_directions.pack(side=tk.LEFT, padx=10)
+
+        confirm_btn = tk.Button(ask_window, text="Confirm", command = lambda: (setattr(self, 'angle', int(angle_selection.get()) * self.directions[direction_selection.get()]), ask_window.destroy()))
+        confirm_btn.pack(pady=5)
 
         ask_window.wait_window()
         
