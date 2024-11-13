@@ -19,7 +19,15 @@ class App:
         "png" : "image" 
     }
 
-    directions = {"clockwise" : 1, "counterclockwise" : -1}
+    directions_allowed = {
+        "clockwise" : 1, 
+        "counterclockwise" : -1
+    }
+
+    ROOT_W = 400
+    ROOT_H = 275
+    ANGLE_WINDOW_W = 230
+    ANGLE_WINDOW_H = 130
 
     def __init__(self) -> None:
         self.logger = logging.getLogger(__file__)
@@ -27,11 +35,18 @@ class App:
         self.files = list()
         self.angle : int = None
         self.filetype : str = None
+
+        self.logger.info(Fore.GREEN + "Initialized app" + Fore.RESET)
     
 
     def start(self) -> None:
+        monitor_w = self.root.winfo_screenwidth()
+        monitor_h = self.root.winfo_screenheight()
+        
         self.root.title("Edit your PDFs")
-        self.root.geometry("400x275")
+        x = int((monitor_w / 2) - (self.ROOT_W / 2))
+        y = int((monitor_h / 2) - (self.ROOT_H / 2))
+        self.root.geometry(f"{self.ROOT_W}x{self.ROOT_H}+{x}+{y-90}")
         self.root.resizable(False, False)
 
         lb_info = tk.Label(self.root, text="Drag and Drop your files here")
@@ -43,13 +58,13 @@ class App:
         button_frame = tk.Frame(self.root)
         button_frame.pack(pady=10)
 
-        btn_merge = tk.Button(button_frame, text="Merge", command=self._merge)
+        btn_merge = tk.Button(button_frame, text="Merge", command=self._merge, bg="blue", fg="white")
         btn_merge.pack(side=tk.LEFT, padx=10)
 
-        btn_rotate = tk.Button(button_frame, text="Rotate", command=self._rotate)
+        btn_rotate = tk.Button(button_frame, text="Rotate", command=self._rotate, bg="blue", fg="white")
         btn_rotate.pack(side=tk.LEFT, padx=10)
 
-        btn_remove = tk.Button(button_frame, text="Remove", command=self._remove_files)
+        btn_remove = tk.Button(button_frame, text="Remove", command=self._remove_files, bg="red", fg="white")
         btn_remove.pack(side=tk.LEFT, padx=10)
 
         self.root.drop_target_register(DND_FILES)
@@ -83,13 +98,13 @@ class App:
                 s.add(ext)
                 self.listbox.insert(tk.END, name)
             except KeyError:
-                messagebox.showwarning("Error", "Invalid file type")
+                messagebox.showwarning("ERROR", "Invalid file type")
                 self.logger.error(Fore.RED + "Invalid file type" + Fore.RESET)
                 self._clear_all()
                 return
 
         if len(s) > 1:
-            messagebox.showwarning("Error", "Select files of the same type")
+            messagebox.showwarning("ERROR", "Select files of the same type")
             self.logger.error(Fore.RED + "Different file types selected" + Fore.RESET)
             self._clear_all()
             return
@@ -102,12 +117,12 @@ class App:
 
     def _check_files(self, *, n_files : int = None) -> bool:
         if not self.files:
-            messagebox.showwarning("Error", "Select at least one file")
+            messagebox.showwarning("ERROR", "Select at least one file")
             self.logger.error(Fore.RED + "No files selected" + Fore.RESET)
             return False
         
         if n_files and len(self.files) > n_files:
-            messagebox.showwarning("Error", "Select only one file")
+            messagebox.showwarning("ERROR", "Select only one file")
             self.logger.error(Fore.RED + "More than one file selected" + Fore.RESET)
             return False
     
@@ -124,14 +139,16 @@ class App:
 
         ask_window = tk.Toplevel(self.root)
         ask_window.title("Select the angle")
+        x = int(self.root.winfo_x() + (self.ROOT_W / 2) - (self.ANGLE_WINDOW_W / 2))
+        y = int(self.root.winfo_y() + (self.ROOT_H / 2) - (self.ANGLE_WINDOW_H / 2))
+        ask_window.geometry(f"{self.ANGLE_WINDOW_W}x{self.ANGLE_WINDOW_H}+{x}+{y}")
         ask_window.resizable(False, False)
-        ask_window.geometry("230x130")
 
         angles = [90, 180]
         angle_selection = tk.StringVar(ask_window)
         angle_selection.set(angles[0])
 
-        directions = list(self.directions.keys())
+        directions = list(self.directions_allowed.keys())
         direction_selection = tk.StringVar(ask_window)
         direction_selection.set(directions[0])
 
@@ -147,7 +164,7 @@ class App:
         dropdown_directions = tk.OptionMenu(frame, direction_selection, *directions)
         dropdown_directions.pack(side=tk.LEFT, padx=10)
 
-        confirm_btn = tk.Button(ask_window, text="Confirm", command = lambda: (setattr(self, 'angle', int(angle_selection.get()) * self.directions[direction_selection.get()]), ask_window.destroy()))
+        confirm_btn = tk.Button(ask_window, text="Confirm", bg="blue", fg="white", command = lambda: (setattr(self, 'angle', int(angle_selection.get()) * self.directions_allowed[direction_selection.get()]), ask_window.destroy()))
         confirm_btn.pack(pady=5)
 
         ask_window.wait_window()
@@ -177,7 +194,7 @@ class App:
             self.logger.info(Fore.GREEN + "Completed" + Fore.RESET)
             messagebox.showinfo("Success", f"Rotated {self.filetype} saved in {output_path}")
         except Exception as e:
-            messagebox.showerror("Error", f"An error occurred: {e}")
+            messagebox.showerror("ERROR", f"An error occurred: {e}")
             self.logger.error(Fore.RED + f"{e}" + Fore.RESET)
         
         self._clear_all()
@@ -217,7 +234,7 @@ class App:
             self.logger.info(Fore.GREEN + "Completed" + Fore.RESET)
             messagebox.showinfo("Success", f"Merged pdf saved in {output_path}")
         except Exception as e:
-            messagebox.showerror("Error", f"An error occurred: {e}")
+            messagebox.showerror("ERROR", f"An error occurred: {e}")
             self.logger.error(Fore.RED + f"{e}" + Fore.RESET)
         
         self._clear_all()
